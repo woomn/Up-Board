@@ -8,6 +8,8 @@ from fastapi.exceptions import RequestValidationError
 from fastapi.responses import JSONResponse
 from starlette.exceptions import HTTPException as StarletteHTTPException
 
+from app.config import get_settings
+
 logger = logging.getLogger("upboard")
 
 
@@ -97,8 +99,20 @@ def register_error_handlers(app: FastAPI) -> None:
         return JSONResponse(_envelope(code, str(exc.detail)), status_code=exc.status_code)
 
     @app.exception_handler(Exception)
-    async def _unhandled(_: Request, exc: Exception) -> JSONResponse:
+    async def _unhandled(request: Request, exc: Exception) -> JSONResponse:
         logger.exception("Unhandled error", exc_info=exc)
+        # Starlette runs this handler in ServerErrorMiddleware, outside CORSMiddleware, so the
+        # 500 would reach the browser without CORS headers and look like a network failure.
+        headers: dict[str, str] = {}
+        origin = request.headers.get("origin")
+        if origin is not None and origin in get_settings().cors_origins:
+            headers = {
+                "Access-Control-Allow-Origin": origin,
+                "Access-Control-Allow-Credentials": "true",
+                "Vary": "Origin",
+            }
         return JSONResponse(
-            _envelope("INTERNAL_ERROR", "An unexpected error occurred"), status_code=500
+            _envelope("INTERNAL_ERROR", "An unexpected error occurred"),
+            status_code=500,
+            headers=headers,
         )
