@@ -18,7 +18,7 @@ import { FacultyProgramFields } from "@/features/auth/components/FacultyProgramF
 
 const FIELDS = ["email", "display_name", "password", "confirm_password", "faculty_id", "program_id"] as const;
 
-export function RegisterForm() {
+export function RegisterForm({ onRegistered }: { onRegistered?: () => void }) {
   const faculties = useFaculties();
   const register = useRegister();
   const config = useAuthConfig();
@@ -42,6 +42,7 @@ export function RegisterForm() {
         program_id: v.program_id,
       });
       setDone(v.email);
+      onRegistered?.();
     } catch (e) {
       if (isApiError(e) && e.code === "EMAIL_TAKEN") {
         form.setError("email", { message: "อีเมลนี้ถูกใช้สมัครแล้ว" }, { shouldFocus: true });
