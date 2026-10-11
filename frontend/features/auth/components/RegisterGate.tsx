@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { useState } from "react";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useAuthConfig } from "@/features/auth/hooks";
 import { GoogleSignInButton } from "@/features/auth/components/GoogleSignInButton";
@@ -13,12 +14,13 @@ import { googleSignInConfigured } from "@/services/googleSignIn";
  */
 export function RegisterGate() {
   const config = useAuthConfig();
+  const [registered, setRegistered] = useState(false);
   if (config.isLoading) return <Skeleton className="h-40 w-full" />;
   if (config.data?.password_signup_enabled) {
     return (
       <div className="grid gap-6">
-        <RegisterForm />
-        {googleSignInConfigured() && config.data.google_enabled && (
+        <RegisterForm onRegistered={() => setRegistered(true)} />
+        {!registered && googleSignInConfigured() && config.data.google_enabled && (
           <>
             <div className="flex items-center gap-3 text-xs text-muted-foreground" aria-hidden="true">
               <span className="h-px flex-1 bg-border" />
